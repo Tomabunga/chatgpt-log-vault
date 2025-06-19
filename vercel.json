@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "functions": {
     "api/log.js": {
       "memory": 1024,
