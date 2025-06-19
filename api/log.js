@@ -1,3 +1,4 @@
+// api/log.js
 import fetch from 'node-fetch'
 import TurndownService from 'turndown'
 import { Octokit } from '@octokit/rest'
@@ -15,10 +16,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ———— HTML 取得 ————
+    // ———— HTML を取得（リダイレクトも自動フォロー） ————
     const resp = await fetch(url, {
       headers: {
-        // ブラウザ風 User-Agent
         'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
           'AppleWebKit/537.36 (KHTML, like Gecko) ' +
@@ -29,14 +29,29 @@ export default async function handler(req, res) {
     })
     const html = await resp.text()
 
-    // ———— Cheerio でパース＆不要要素を丸ごと削除 ————
+    // ———— Cheerio でパース ————
     const $ = cheerio.load(html)
-    $('script, template, style, link').remove()
 
-    // 会話コンテンツが <main> にあればそれを、なければ <body> 全体を対象
-    const contentHtml = $('main').length
-      ? $('main').html()
-      : $('body').html() || ''
+    // ———— ノイズ除去 ————
+    // Next.js の JSON データやスクリプトを完全に削除
+    $('script#\\__NEXT_DATA__').remove()
+    $('script').remove()
+    $('template').remove()
+    $('style').remove()
+    $('link').remove()
+    // HTML コメントも消す
+    $.root()
+      .contents()
+      .filter((i, el) => el.type === 'comment')
+      .remove()
+
+    // ———— 会話本文を抽出 ————
+    // シェアページは <article> 要素内に Markdown 相当の HTML が入っている前提
+    const article = $('article')
+    if (!article.length) {
+      throw new Error('Chat content container (<article>) not found')
+    }
+    const contentHtml = article.html() || ''
 
     // ———— Markdown 化 ————
     const td = new TurndownService()
@@ -58,6 +73,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, path })
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Server error' })
+    return res.status(500).json({ error: error.message || 'Server error' })
   }
 }
