@@ -13,7 +13,14 @@ export default async function handler(req, res) {
 
   try {
     // 1) HTML 取得
-    const resp = await fetch(url)
+     const resp = await fetch(url, {
+   headers: {
+     // ブラウザと同じUser-Agentを偽装
+     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/113.0.0.0 Safari/537.36',
+     // HTMLが欲しいよ、という意思表示
+     'Accept': 'text/html,application/xhtml+xml'
+   }
+ });
     const html = await resp.text()
 
     // 2) Markdown 変換
