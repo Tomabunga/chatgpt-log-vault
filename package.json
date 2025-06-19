@@ -2,7 +2,9 @@
   "name": "chatgpt-log-vault",
   "version": "1.0.0",
   "dependencies": {
-    "node-fetch": "^2.6.7",
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer-core": "^15.5.1",
+    "turndown": "^7.1.1",
     "@octokit/rest": "^19.0.7"
   }
 }
